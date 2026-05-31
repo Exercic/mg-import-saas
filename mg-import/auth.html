@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MG IMPORT — Connexion</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #dc2626;
+    --red-dark: #b91c1c;
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #242424;
+    --border: rgba(255,255,255,0.08);
+    --border-hover: rgba(255,255,255,0.15);
+    --text1: #f5f5f5;
+    --text2: #a1a1aa;
+    --text3: #71717a;
+    --green: #22c55e;
+    --font: 'Plus Jakarta Sans', sans-serif;
+    --font-title: 'Syne', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text1);
+    font-family: var(--font);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  /* Background pattern */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 20%, rgba(220,38,38,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(220,38,38,0.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .auth-container {
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Logo */
+  .brand {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+  .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .brand-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--red);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .brand-name {
+    font-family: var(--font-title);
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 2px;
+  }
+  .brand-name span { color: var(--red); }
+  .brand-sub {
+    font-size: 13px;
+    color: var(--text3);
+    letter-spacing: 0.5px;
+  }
+
+  /* Card */
+  .auth-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    background: var(--bg3);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+    gap: 4px;
+  }
+  .tab {
+    flex: 1;
+    padding: 9px;
+    border: none;
+    background: transparent;
+    border-radius: 7px;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: var(--bg2);
+    color: var(--text1);
+    border: 1px solid var(--border-hover);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Form */
+  .form-group { margin-bottom: 18px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 7px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text1);
+    font-family: var(--font);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
+  }
+  .form-input::placeholder { color: var(--text3); }
+  .form-input option { background: var(--bg3); }
+
+  /* Password toggle */
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap .form-input { padding-right: 44px; }
+  .pw-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 16px;
+    padding: 4px;
+    line-height: 1;
+  }
+  .pw-toggle:hover { color: var(--text2); }
+
+  /* Submit button */
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: var(--red);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-family: var(--font-title);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 8px;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-submit:hover { background: var(--red-dark); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(220,38,38,0.35); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+  .btn-submit .spinner {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .btn-submit.loading .spinner { display: inline-block; }
+  .btn-submit.loading .btn-label { opacity: 0.7; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Alert */
+  .alert {
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    display: none;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .alert.show { display: flex; }
+  .alert-error { background: rgba(220,38,38,0.1); border: 1px solid rgba(220,38,38,0.25); color: #fca5a5; }
+  .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #86efac; }
+  .alert-info { background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); color: #93c5fd; }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: var(--text3);
+    font-size: 12px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Role selector cards */
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 7px;
+  }
+  .role-card {
+    padding: 10px 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .role-card:hover { border-color: var(--border-hover); }
+  .role-card.selected { border-color: var(--red); background: rgba(220,38,38,0.08); }
+  .role-card input { display: none; }
+  .role-icon { font-size: 18px; margin-bottom: 4px; }
+  .role-name { font-size: 10px; font-weight: 600; color: var(--text2); letter-spacing: 0.3px; }
+  .role-card.selected .role-name { color: #fca5a5; }
+
+  /* Footer link */
+  .auth-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .auth-footer a {
+    color: var(--red);
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .auth-footer a:hover { text-decoration: underline; }
+
+  /* Password strength */
+  .pw-strength { margin-top: 6px; }
+  .pw-strength-bar {
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+  .pw-strength-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: all 0.3s;
+    width: 0%;
+  }
+  .pw-strength-label { font-size: 11px; color: var(--text3); }
+
+  /* Config warning */
+  .config-warning {
+    background: rgba(234,179,8,0.08);
+    border: 1px solid rgba(234,179,8,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: #fbbf24;
+    display: none;
+  }
+  .config-warning.show { display: block; }
+  .config-warning code {
+    background: rgba(234,179,8,0.1);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .auth-card { padding: 24px 20px; }
+    .brand-name { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="auth-container">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-logo">
+      <div class="brand-icon">📦</div>
+      <div class="brand-name">MG<span>·</span>IMPORT</div>
+    </div>
+    <div class="brand-sub">Système Pro de Gestion Logistique</div>
+  </div>
+
+  <!-- Config warning -->
+  <div class="config-warning" id="config-warning">
+    ⚠️ Supabase non configuré. Ouvrez <code>js/supabase-config.js</code> et renseignez votre URL et clé API.
+    <br><br>En attendant, utilisez le mode démo : <strong>demo@mgimport.cm / demo1234</strong>
+  </div>
+
+  <!-- Card -->
+  <div class="auth-card">
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" id="tab-login" onclick="switchTab('login')">Connexion</button>
+      <button class="tab" id="tab-register" onclick="switchTab('register')">Créer un compte</button>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert" id="alert"></div>
+
+    <!-- LOGIN FORM -->
+    <form id="form-login" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label">Adresse email</label>
+        <input type="email" class="form-input" id="login-email" placeholder="votre@email.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" class="form-input" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)">👁</button>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="btn-login">
+        <span class="spinner"></span>
+        <span class="btn-label">SE CONNECTER</span>
+      </button>
+    </form>
+
+    <!-- REGISTER FORM -->
+    <form id="form-register" onsubmit="handleRegister(event)" style="display:none;">
+      <div class="form-group">
+        <label class="form-label">Nom complet</label>
+        <input type="text" class="form-input" id="reg-nom" placeholder="Ex : Marie Dupont" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Adresse email</label>
+        <input type="email" class="form-input" id="reg-email" placeholder="votre@email.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mot de passe</label>
+        <div class="input-wrap">
+          <input type="password" class="form-input" id="reg-password" placeholder="8 caractères minimum" required autocomplete="new-password" oninput="checkStrength(this.value)">
+          <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)">👁</button>
+        </div>
+        <div class="pw-strength">
+          <div class="pw-strength-bar"><div class="pw-strength-fill" id="pw-fill"></div></div>
+          <div class="pw-strength-label" id="pw-label"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rôle</label>
+        <div class="role-grid">
+          <label class="role-card selected" onclick="selectRole('admin')">
+            <input type="radio" name="role" value="admin" checked>
+            <div class="role-icon">👑</div>
+            <div class="role-name">Admin</div>
+          </label>
+          <label class="role-card" onclick="selectRole('gestionnaire')">
+            <input type="radio" name="role" value="gestionnaire">
+            <div class="role-icon">🗂️</div>
+            <div class="role-name">Gestionnaire</div>
+          </label>
+          <label class="role-card" onclick="selectRole('vendeur')">
+            <input type="radio" name="role" value="vendeur">
+            <div class="role-icon">💼</div>
+            <div class="role-name">Vendeur</div>
+          </label>
+        </div>
+      </div>
+      <button type="submit" class="btn-submit" id="btn-register">
+        <span class="spinner"></span>
+        <span class="btn-label">CRÉER MON COMPTE</span>
+      </button>
+    </form>
+
+    <div class="divider">ou</div>
+
+    <!-- Forgot password -->
+    <div style="text-align:center;">
+      <a href="#" onclick="handleForgotPassword(event)" style="font-size:12px;color:var(--text3);text-decoration:none;" onmouseover="this.style.color='#fca5a5'" onmouseout="this.style.color='var(--text3)'">
+        Mot de passe oublié ?
+      </a>
+    </div>
+
+  </div><!-- /auth-card -->
+
+  <div class="auth-footer">
+    MG Import Pro &nbsp;·&nbsp; v22.1 &nbsp;·&nbsp; Yaoundé, Cameroun
+  </div>
+
+</div><!-- /auth-container -->
+
+<script>
+// ============================================================
+// INIT
+// ============================================================
+let sb = null;
+let selectedRole = 'admin';
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Vérifier la configuration Supabase
+  if (typeof SUPABASE_URL === 'undefined' || SUPABASE_URL === 'VOTRE_URL_ICI') {
+    document.getElementById('config-warning').classList.add('show');
+    return;
+  }
+  const { createClient } = window.supabase;
+  sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  // Si déjà connecté → rediriger
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = 'index.html';
+  });
+});
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-register').classList.toggle('active', !isLogin);
+  document.getElementById('form-login').style.display = isLogin ? 'block' : 'none';
+  document.getElementById('form-register').style.display = isLogin ? 'none' : 'block';
+  hideAlert();
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  // Mode démo sans Supabase
+  if (!sb) {
+    if (email === 'demo@mgimport.cm' && password === 'demo1234') {
+      showAlert('Connexion démo réussie ! Redirection...', 'success');
+      setTimeout(() => window.location.href = 'index.html', 1200);
+    } else {
+      showAlert('Mode démo : utilisez demo@mgimport.cm / demo1234', 'error');
+    }
+    return;
+  }
+
+  setLoading('btn-login', true);
+  hideAlert();
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  setLoading('btn-login', false);
+
+  if (error) {
+    const msg = error.message.includes('Invalid login') || error.message.includes('invalid')
+      ? 'Email ou mot de passe incorrect.'
+      : error.message.includes('Email not confirmed')
+      ? 'Veuillez confirmer votre email avant de vous connecter.'
+      : error.message;
+    showAlert('❌ ' + msg, 'error');
+  } else {
+    showAlert('✅ Connexion réussie ! Redirection...', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1000);
+  }
+}
+
+// ============================================================
+// REGISTER
+// ============================================================
+async function handleRegister(e) {
+  e.preventDefault();
+  const nom = document.getElementById('reg-nom').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+
+  if (password.length < 8) {
+    showAlert('❌ Le mot de passe doit faire au moins 8 caractères.', 'error');
+    return;
+  }
+
+  if (!sb) {
+    showAlert('⚠️ Configurez Supabase pour créer des comptes réels.', 'info');
+    return;
+  }
+
+  setLoading('btn-register', true);
+  hideAlert();
+
+  const { data, error } = await sb.auth.signUp({
+    email,
+    password,
+    options: {
+      data: { nom, role: selectedRole }
+    }
+  });
+
+  setLoading('btn-register', false);
+
+  if (error) {
+    const msg = error.message.includes('already registered')
+      ? 'Cet email est déjà utilisé.'
+      : error.message;
+    showAlert('❌ ' + msg, 'error');
+  } else if (data.user && !data.session) {
+    showAlert('📧 Un email de confirmation a été envoyé à ' + email + '. Vérifiez votre boîte mail.', 'success');
+  } else {
+    showAlert('✅ Compte créé ! Redirection...', 'success');
+    setTimeout(() => window.location.href = 'index.html', 1200);
+  }
+}
+
+// ============================================================
+// MOT DE PASSE OUBLIÉ
+// ============================================================
+async function handleForgotPassword(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+
+  if (!email) {
+    showAlert('ℹ️ Entrez votre email dans le champ ci-dessus, puis cliquez à nouveau.', 'info');
+    return;
+  }
+  if (!sb) {
+    showAlert('⚠️ Configurez Supabase pour la réinitialisation de mot de passe.', 'info');
+    return;
+  }
+
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/index.html'
+  });
+
+  if (error) {
+    showAlert('❌ ' + error.message, 'error');
+  } else {
+    showAlert('📧 Email de réinitialisation envoyé à ' + email, 'success');
+  }
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function selectRole(role) {
+  selectedRole = role;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+}
+
+function togglePw(id, btn) {
+  const input = document.getElementById(id);
+  const isText = input.type === 'text';
+  input.type = isText ? 'password' : 'text';
+  btn.textContent = isText ? '👁' : '🙈';
+}
+
+function checkStrength(pw) {
+  const fill = document.getElementById('pw-fill');
+  const label = document.getElementById('pw-label');
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const configs = [
+    { w: '0%',   color: 'transparent', text: '' },
+    { w: '25%',  color: '#ef4444', text: 'Faible' },
+    { w: '50%',  color: '#f97316', text: 'Moyen' },
+    { w: '75%',  color: '#eab308', text: 'Bien' },
+    { w: '100%', color: '#22c55e', text: 'Excellent' }
+  ];
+  const c = configs[score];
+  fill.style.width = c.w;
+  fill.style.background = c.color;
+  label.textContent = c.text;
+  label.style.color = c.color;
+}
+
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.classList.toggle('loading', loading);
+}
+
+function showAlert(msg, type = 'error') {
+  const el = document.getElementById('alert');
+  el.className = 'alert show alert-' + type;
+  el.textContent = msg;
+}
+function hideAlert() {
+  document.getElementById('alert').classList.remove('show');
+}
+</script>
+</body>
+</html>

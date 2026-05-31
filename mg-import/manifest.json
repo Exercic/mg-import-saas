@@ -1,0 +1,33 @@
+{
+  "name": "MG IMPORT Pro",
+  "short_name": "MG IMPORT",
+  "description": "Système de gestion d'importation et de facturation",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2f0eb",
+  "theme_color": "#dc2626",
+  "orientation": "any",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["business", "productivity", "finance"]
+}

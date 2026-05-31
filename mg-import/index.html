@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="MG IMPORT Pro — Système de gestion logistique, facturation et calcul de coûts d'importation">
+<meta name="theme-color" content="#dc2626">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MG IMPORT">
+<title>MG IMPORT — Système Pro v22.1</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23dc2626'/><text y='.9em' font-size='70' x='50%' text-anchor='middle'>📦</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Supabase Auth -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabase-config.js"></script>
+<script src="js/auth.js"></script>
+<!-- App -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="theme-toggle" id="theme-toggle">🌙 Mode sombre</div>
+
+<nav class="sidebar">
+  <div class="logo"><div class="logo-text">MG<span class="logo-dot">·</span>IMPORT</div><div class="logo-sub">MG Import System</div></div>
+  <div class="nav">
+    <a class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+    <a class="nav-item" onclick="showPage('commandes')"><span class="nav-icon">📦</span><span>Commandes</span></a>
+    <a class="nav-item" onclick="showPage('nouvelle')"><span class="nav-icon">➕</span><span>Nouvelle</span></a>
+    <a class="nav-item" onclick="showPage('devis')"><span class="nav-icon">📄</span><span>Devis</span></a>
+    <a class="nav-item" onclick="showPage('fournisseurs')"><span class="nav-icon">🏭</span><span>Fournisseurs</span></a>
+    <a class="nav-item" onclick="showPage('optimisation')"><span class="nav-icon">💡</span><span>Optimisation</span></a>
+    <a class="nav-item" onclick="showPage('factures')"><span class="nav-icon">📑</span><span>Factures</span></a>
+    <a class="nav-item" onclick="showPage('societe')"><span class="nav-icon">🏢</span><span>Société</span></a>
+    <a class="nav-item" onclick="showPage('exports')"><span class="nav-icon">📤</span><span>Exports</span></a>
+    <a class="nav-item" onclick="showPage('parametres')"><span class="nav-icon">⚙️</span><span>Paramètres</span></a>
+  </div>
+  <div class="sidebar-bottom"><div id="user-menu-placeholder"></div><div class="version">v22.1 — Bugs corrigés ✅</div><div id="pwa-install-btn" style="display:none;margin-top:10px;"><button onclick="installPWA()" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;">📲 Installer</button></div><div id="pwa-status" style="font-size:10px;color:var(--text3);margin-top:6px;font-family:var(--font-mono);"></div></div>
+</nav>
+
+<main class="main">
+  <!-- DASHBOARD -->
+  <div id="page-dashboard" class="page active">
+    <div class="page-header"><div><div class="page-title">DASH<span>BOARD</span></div><div class="page-sub" id="dash-date"></div></div></div>
+    <div class="kpi-grid" id="kpi-grid"></div>
+    <div class="chart-container"><canvas id="beneficeChart" width="400" height="200"></canvas></div>
+    <div class="chart-container"><canvas id="statutChart" width="400" height="200"></canvas></div>
+    <div class="chart-container"><canvas id="topClientsChart" width="800" height="200"></canvas></div>
+    <div class="table-wrap"><div class="table-header"><div class="table-title">Dernières commandes</div><button class="btn btn-ghost btn-sm" onclick="showPage('commandes')">Voir tout →</button></div><div id="dash-table-body"></div></div>
+    <div id="dash-recos"></div>
+  </div>
+
+  <!-- COMMANDES -->
+  <div id="page-commandes" class="page">
+    <div class="page-header"><div><div class="page-title">COM<span>MANDES</span></div><div class="page-sub" id="commandes-count"></div></div><div class="actions-row"><input class="search-bar" id="search-input" placeholder="🔍 Rechercher..." oninput="renderCommandes()"><input type="month" id="filter-month" class="form-input" style="width:140px" onchange="renderCommandes()"><select id="filter-statut" class="form-select" style="width:140px" onchange="renderCommandes()"><option value="">Tous statuts</option><option value="en_attente">⏳ En attente</option><option value="devis">📄 Devis</option><option value="livre">✅ Livré</option><option value="annule">❌ Annulé</option></select><button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 CSV</button><button class="btn btn-ghost btn-sm" onclick="exportExcel()">📊 Excel</button><button class="btn btn-ghost btn-sm" id="import-csv-btn">📂 Importer CSV</button><button class="btn btn-red" onclick="showPage('nouvelle')">+ Nouvelle</button></div></div>
+    <div class="table-wrap"><div id="commandes-body"></div><div id="pagination-controls" class="pagination"></div></div>
+  </div>
+
+  <!-- NOUVELLE COMMANDE -->
+  <div id="page-nouvelle" class="page">
+    <div class="page-header"><div><div class="page-title">NOUVELLE <span>COMMANDE</span></div><div class="page-sub">Poids total = unitaire × qté | Volume total = (L×l×H/1e6) × qté</div></div></div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Client *</label><input class="form-input" id="f-client" oninput="recalc()"></div>
+      <!-- [AJOUT] Champ Ville du client -->
+      <div class="form-group"><label class="form-label">Ville du client *</label><input class="form-input" id="f-ville" placeholder="Ex: Douala, Yaoundé" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Email client</label><input class="form-input" id="f-email" placeholder="client@exemple.com"></div>
+      <div class="form-group"><label class="form-label">Type client</label><select class="form-select" id="f-typeClient" onchange="recalc(); majRequisVente()"><option value="pro">Professionnel</option><option value="particulier">Particulier</option></select></div>
+      <div class="form-group"><label class="form-label">Fournisseur</label><select class="form-select" id="f-fournisseur"><option value="">Sélectionner</option></select></div>
+      <div class="form-group"><label class="form-label">Produit *</label><input class="form-input" id="f-produit" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Quantité *</label><input class="form-input" id="f-qty" type="number" min="1" value="1" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Prix achat unitaire *</label><input class="form-input" id="f-prix" type="number" step="0.01" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Devise</label><select class="form-select" id="f-devise" onchange="recalc()"><option value="CNY">CNY</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="XAF">XAF</option></select></div>
+      <div class="form-group"><label class="form-label">Poids unitaire (kg) *</label><input class="form-input" id="f-poids" type="number" step="0.1" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Type de transport</label><select class="form-select" id="f-poidsSousType" onchange="toggleDimensions(); recalc()">
+  <option value="normal_14">✈️ Normal — Avion (14 jours dès message transitaire)</option>
+  <option value="express_7">✈️ Express — Avion (7 jours dès message transitaire)</option>
+  <option value="sensible_14">✈️ Sensible — Avion (14 jours dès message transitaire)</option>
+  <option value="bateau_45">🚢 CMB — Bateau (45 jours dès message transitaire)</option>
+</select></div>
+<div id="bateau-cbm-note" style="display:none;align-items:center;gap:8px;padding:10px 14px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:8px;font-size:12px;color:#818cf8;margin-top:8px;">
+  🚢 <b>Fret Maritime / CMB sélectionné</b> — Le calcul se fait en <b>CBM (m³)</b>. Renseignez les dimensions ci-dessous.
+</div>
+      <div id="dimensions-group" style="display:none;margin-top:10px;"><div class="form-group"><label class="form-label">Longueur (cm)</label><input class="form-input" id="f-long" type="number" step="1" oninput="recalc()"></div><div class="form-group"><label class="form-label">Largeur (cm)</label><input class="form-input" id="f-larg" type="number" step="1" oninput="recalc()"></div><div class="form-group"><label class="form-label">Hauteur (cm)</label><input class="form-input" id="f-haut" type="number" step="1" oninput="recalc()"></div></div>
+      <div class="form-group"><label class="form-label">Prix de vente client (XAF) <span id="vente-requis" style="color:var(--red);display:none">*</span></label><input class="form-input" id="f-vente" type="number" placeholder="Obligatoire pour particulier" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Frais manuels (XAF)</label><input class="form-input" id="f-frais" type="number" value="0" oninput="recalc()"></div>
+      <div class="form-group"><label class="form-label">Statut</label><select class="form-select" id="f-statut"><option value="devis">📄 Devis (à valider)</option><option value="en_attente">⏳ En attente</option><option value="livre">✅ Livré</option><option value="annule">❌ Annulé</option></select></div>
+      <div class="form-group"><label class="form-label">📱 WhatsApp client</label><input class="form-input" id="f-whatsapp" placeholder="+237 6XX XXX XXX"></div>
+      <div class="form-group"><label class="form-label">Circuit logistique</label><select class="form-select" id="f-circuitLogistique" onchange="toggleModeRecuperation()">
+        <option value="via_moi">🚗 Via moi (je récupère et redistribue)</option>
+        <option value="direct_client">🏭 Direct client (transitaire livre client)</option>
+      </select></div>
+      <div class="form-group" id="f-modeRecup-group"><label class="form-label">Mode de récupération</label><select class="form-select" id="f-modeRecuperation">
+        <option value="retrait_gratuit">📍 Retrait gratuit chez moi</option>
+        <option value="livraison_payante">🚚 Livraison à domicile (payante)</option>
+      </select></div>
+    </div>
+    <div class="calc-panel"><div class="calc-title">RÉSULTATS AUTOMATIQUES</div><div class="calc-row"><span class="calc-key">Poids total / Volume total</span><span class="calc-val" id="r-poids-volume">—</span></div><div class="calc-row"><span class="calc-key">Base facturée (arrondi)</span><span class="calc-val" id="r-base-facturee">—</span></div><div class="calc-row"><span class="calc-key">Prix produit total</span><span class="calc-val" id="r-prix-produit">—</span></div><div class="calc-row"><span class="calc-key">Coût transport</span><span class="calc-val" id="r-transport">—</span></div><div class="calc-row" id="row-frais-manuels" style="display:none"><span class="calc-key">Frais supplémentaires</span><span class="calc-val" id="r-frais-manuels">—</span></div><div class="calc-row total"><span class="calc-key">COÛT TOTAL</span><span class="calc-val red" id="r-cout-total">—</span></div><div class="calc-row" style="background:rgba(249,115,22,0.06);border-radius:6px;padding:8px 0;"><span class="calc-key" style="color:var(--orange);">⚙️ Ajustement estimatif</span><span class="calc-val" style="color:var(--orange);" id="r-buffer">—</span></div><div class="calc-row total" style="border-top:2px solid var(--orange);"><span class="calc-key" style="color:var(--orange);">MONTANT TOTAL À PRÉVOIR</span><span class="calc-val" style="color:var(--orange);" id="r-cout-prudent">—</span></div><div class="calc-row total"><span class="calc-key">BÉNÉFICE NET CLIENT</span><span class="calc-val" id="r-benefice">—</span></div><div class="calc-row"><span class="calc-key">Rentabilité</span><span class="calc-val" id="r-rentabilite">—</span></div></div>
+
+    <div id="reco-box"></div><button class="btn btn-red" onclick="saveCommande()" style="width:100%;justify-content:center;padding:14px;margin-top:16px;">💾 ENREGISTRER</button></div>
+
+  <!-- DEVIS -->
+  <div id="page-devis" class="page"><div class="page-header"><div><div class="page-title">DE<span>VIS</span></div><div class="page-sub">Créez et gérez vos devis</div></div><button class="btn btn-red" onclick="montrerFormulaireDevis()">+ Nouveau devis</button></div><div id="formulaire-devis" style="display:none; margin-bottom:20px; background:var(--bg3); padding:20px; border-radius:10px;"><div class="form-grid"><div class="form-group"><label>Client</label><input id="devis-client" class="form-input"></div><div class="form-group"><label>Email</label><input id="devis-email" class="form-input"></div><div class="form-group"><label>Type client</label><select id="devis-typeClient" class="form-select"><option value="pro">Pro</option><option value="particulier">Particulier</option></select></div><div class="form-group"><label>Produit</label><input id="devis-produit" class="form-input"></div><div class="form-group"><label>Quantité</label><input id="devis-qty" type="number" value="1" class="form-input"></div><div class="form-group"><label>Prix achat unitaire</label><input id="devis-prixAchat" type="number" class="form-input"></div><div class="form-group"><label>Devise</label><select id="devis-devise" class="form-select"><option value="CNY">CNY</option><option value="USD">USD</option><option value="EUR">EUR</option><option value="XAF">XAF</option></select></div><div class="form-group"><label>Poids unitaire (kg)</label><input id="devis-poids" type="number" step="0.1" class="form-input"></div><div class="form-group"><label>Type de transport</label><select id="devis-transport" class="form-select">
+  <option value="normal_14">✈️ Normal — Avion (14j)</option>
+  <option value="express_7">✈️ Express — Avion (7j)</option>
+  <option value="sensible_14">✈️ Sensible — Avion (14j)</option>
+  <option value="bateau_45">🚢 CMB — Bateau (45j)</option>
+</select></div><div class="form-group"><label>Prix vente (XAF)</label><input id="devis-prixVente" type="number" class="form-input"></div></div><button class="btn btn-red" onclick="creerDevis()">Créer le devis</button></div><div class="table-wrap"><div id="devis-body"></div></div></div>
+
+  <!-- FOURNISSEURS -->
+  <div id="page-fournisseurs" class="page"><div class="page-header"><div><div class="page-title">FOURNI<span>SSEURS</span></div><div class="page-sub">Gestion complète</div></div><button class="btn btn-red" onclick="ajouterFournisseur()">+ Ajouter</button></div><div class="table-wrap"><div id="fournisseurs-body"></div></div></div>
+
+  <!-- OPTIMISATION -->
+  <div id="page-optimisation" class="page"><div class="page-header"><div><div class="page-title">OPTIMI<span>SATION</span></div><div class="page-sub">Bons plans automatiques · espaces libres · calcul de bénéfice en direct · 100% discret</div></div><button class="btn btn-ghost" onclick="renderOptimisation()">🔄 Actualiser</button></div><div class="optim-cards" id="optim-cards"></div><div class="table-wrap"><div class="table-header"><div class="table-title">💡 Opportunités détectées</div><div style="font-size:11px;color:var(--text3);">Uniquement visible par toi — jamais sur les factures clients</div></div><div id="optim-body"></div></div></div>
+
+  <div id="page-factures" class="page">
+    <div class="page-header">
+      <div><div class="page-title">FAC<span>TURES</span></div><div class="page-sub">Générez des factures individuelles ou groupées</div></div>
+      <div class="actions-row">
+        <button class="btn btn-ghost" onclick="toutSelectionnerFactures()">☑️ Tout sélectionner</button>
+        <button class="btn btn-ghost" onclick="deselectionnerTout()">⬜ Désélectionner</button>
+        <button class="btn btn-red" onclick="genererFactureLot()">📄 PDF groupé</button>
+      </div>
+    </div>
+    <!-- Sélecteur de style de facture -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:22px;box-shadow:var(--shadow);">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);margin-bottom:16px;">🎨 Style de facture</div>
+      <div class="style-selector">
+        <div id="style-btn-moderne" class="style-card active" onclick="setStyleFacture('moderne')">
+          <div class="style-card-icon">🗂️</div>
+          <div class="style-card-name">Version 1 — Moderne</div>
+          <div class="style-card-desc">Épurée · Bande latérale</div>
+        </div>
+        <div id="style-btn-blocs" class="style-card" onclick="setStyleFacture('blocs')">
+          <div class="style-card-icon">📋</div>
+          <div class="style-card-name">Version 2 — Carte/Blocs</div>
+          <div class="style-card-desc">Lisible · Impact fort</div>
+        </div>
+        <div id="style-btn-premium" class="style-card" onclick="setStyleFacture('premium')">
+          <div class="style-card-icon">💎</div>
+          <div class="style-card-name">Version 3 — Premium</div>
+          <div class="style-card-desc">Contraste · Focus total</div>
+        </div>
+      </div>
+      <div id="style-actif-label" style="margin-top:14px;font-size:12px;color:var(--text3);"></div>
+    </div>
+    <!-- KPIs Factures -->
+    <div id="factures-kpis" class="kpi-grid" style="margin-bottom:24px;"></div>
+    <!-- Filtres -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+      <input type="text" id="facture-search" class="search-bar" placeholder="🔍 Rechercher client / produit..." oninput="renderFactures()">
+      <select id="facture-statut" class="form-select" style="width:150px;" onchange="renderFactures()">
+        <option value="">Tous statuts</option>
+        <option value="en_attente">⏳ En attente</option>
+        <option value="livre">✅ Livré</option>
+        <option value="annule">❌ Annulé</option>
+      </select>
+      <select id="facture-mois" class="form-select" style="width:150px;" onchange="renderFactures()">
+        <option value="">Tous les mois</option>
+      </select>
+    </div>
+    <!-- Liste -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <div class="table-title">📋 Commandes — <span id="factures-selected-count" style="color:var(--red)">0 sélectionnée(s)</span></div>
+        <div style="font-size:12px;color:var(--text3);">Cochez les commandes à inclure dans la facture groupée</div>
+      </div>
+      <div id="factures-list"></div>
+    </div>
+  </div>
+
+  <!-- SOCIÉTÉ -->
+  <div id="page-societe" class="page">
+    <div class="page-header">
+      <div><div class="page-title">SOCI<span>ÉTÉ</span></div><div class="page-sub">Identité visuelle &amp; informations légales</div></div>
+      <div class="actions-row">
+        <button class="btn btn-ghost" onclick="reinitialiserSociete()">↺ Réinitialiser</button>
+        <button class="btn btn-red" onclick="saveSociete()">💾 Sauvegarder</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;" class="societe-grid">
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <div class="param-section">
+          <div class="param-section-title">🏢 Identité</div>
+          <div class="form-grid" style="margin-bottom:0">
+            <div class="form-group"><label class="form-label">Nom de la société *</label><input class="form-input" id="soc-nom" placeholder="Ex: MG IMPORT" oninput="previewSociete()"></div>
+            <div class="form-group"><label class="form-label">Slogan / sous-titre</label><input class="form-input" id="soc-slogan" placeholder="Ex: Votre partenaire logistique" oninput="previewSociete()"></div>
+            <div class="form-group full"><label class="form-label">Adresse complète</label><input class="form-input" id="soc-adresse" placeholder="Ex: Yaoundé, Cameroun" oninput="previewSociete()"></div>
+          </div>
+        </div>
+        <div class="param-section">
+          <div class="param-section-title">📞 Contacts</div>
+          <div class="form-grid" style="margin-bottom:0">
+            <div class="form-group"><label class="form-label">Téléphone</label><input class="form-input" id="soc-tel" placeholder="+237 6XX XXX XXX" oninput="previewSociete()"></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-input" id="soc-email" placeholder="contact@societe.com" oninput="previewSociete()"></div>
+            <div class="form-group"><label class="form-label">Site web</label><input class="form-input" id="soc-site" placeholder="www.societe.com" oninput="previewSociete()"></div>
+            <div class="form-group"><label class="form-label">N° Registre Commerce</label><input class="form-input" id="soc-registre" placeholder="RC/YAO/XXXX" oninput="previewSociete()"></div>
+            <div class="form-group"><label class="form-label">🟠 Orange Money (numéro)</label><input class="form-input" id="soc-orangeMoney" placeholder="Ex: +237 69X XXX XXX" oninput="previewSociete()"></div>
+            <div class="form-group"><label class="form-label">🟡 MTN Mobile Money (numéro)</label><input class="form-input" id="soc-mtnMoney" placeholder="Ex: +237 67X XXX XXX" oninput="previewSociete()"></div>
+          </div>
+        </div>
+        <div class="param-section">
+          <div class="param-section-title">🖼️ Logo</div>
+          <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+            <div id="logo-preview" style="width:90px;height:90px;border:2px dashed var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg3);overflow:hidden;flex-shrink:0;">🏢</div>
+            <div style="flex:1">
+              <label class="form-label" style="margin-bottom:8px;display:block">Importer un logo</label>
+              <input type="file" id="soc-logo-file" accept="image/*" class="form-input" style="margin-bottom:8px">
+              <button class="btn btn-ghost btn-sm" onclick="supprimerLogo()">🗑 Supprimer le logo</button>
+            </div>
+          </div>
+        </div>
+        <div class="param-section">
+          <div class="param-section-title">🎨 Couleur de marque</div>
+          <div class="form-group">
+            <label class="form-label">Couleur principale (factures, en-têtes)</label>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <input type="color" id="soc-couleur" value="#e63329" oninput="previewSociete()" style="width:48px;height:38px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:none;padding:2px;">
+              <span style="font-size:13px;color:var(--text2);">Couleur utilisée sur vos factures PDF</span>
+            </div>
+          </div>
+        </div>
+        <!-- [AJOUT] Nouvelle section Frais annexes et clauses -->
+        <div class="param-section">
+          <div class="param-section-title">💰 Frais & Tarifs</div>
+          <div class="param-row"><span class="param-key">Frais annexes Particuliers (XAF) — inclus dans le total client</span><input class="param-input" id="soc-fraisAnnexesPart" type="number" value="2500"></div>
+          <div class="param-row"><span class="param-key">Frais annexes Pro (XAF) — visibles sur facture</span><input class="param-input" id="soc-fraisAnnexesPro" type="number" value="2500"></div>
+          <div class="param-row"><span class="param-key">Tarif livraison à domicile (XAF)</span><input class="param-input" id="soc-tarifLivraison" type="number" value="3000"></div>
+        </div>
+        <div class="param-section">
+          <div class="param-section-title">⚖️ Clauses de non-responsabilité</div>
+          <textarea class="form-input" id="soc-clauses" rows="5" placeholder="Le montant final à payer est basé sur les dimensions fournies. Le prix final exact dépend de la pesée et du cubage réels validés par le transitaire lors de l'arrivée. Les délais courent à partir du signal du transitaire."></textarea>
+        </div>
+        <div class="param-section">
+          <div class="param-section-title">📝 Mentions légales</div>
+          <textarea class="form-input" id="soc-mentions" rows="4" placeholder="Ex: Merci de votre confiance. Paiement à réception." oninput="previewSociete()"></textarea>
+        </div>
+      </div>
+      <div>
+        <div class="param-section" style="position:sticky;top:20px;">
+          <div class="param-section-title">👁️ Aperçu en-tête de facture</div>
+          <div id="societe-preview" style="border:1px solid var(--border);border-radius:8px;padding:20px;background:white;color:#111;min-height:180px;font-family:var(--font-body);"></div>
+          <div style="margin-top:16px;padding:14px;background:var(--green-dim);border-radius:8px;font-size:12px;color:var(--green);">✅ Ces informations apparaissent sur toutes vos factures PDF</div>
+          <div style="margin-top:10px;padding:14px;background:var(--orange-dim);border-radius:8px;font-size:12px;color:var(--orange);">⚠️ Renseignez bien le téléphone et l&#39;email pour que vos clients puissent vous contacter</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXPORTS -->
+  <div id="page-exports" class="page"><div class="page-header"><div><div class="page-title">EX<span>PORTS</span></div></div></div><div class="table-wrap"><div class="table-header"><div class="table-title">📅 Récapitulatif Mensuel</div><div><select class="form-select" id="export-mois" style="width:140px" onchange="renderRecapMensuel()"></select><button class="btn btn-ghost btn-sm" onclick="exportCSVMois()">CSV mois</button><button class="btn btn-red btn-sm" onclick="exportRecapPDF()">📄 PDF mois</button></div></div><div id="recap-mensuel-body"></div></div><div class="table-wrap"><div class="table-header"><div class="table-title">📦 Export global</div><button class="btn btn-ghost btn-sm" onclick="exportCSV()">CSV complet</button><button class="btn btn-ghost btn-sm" onclick="exportExcel()">📊 Excel complet</button></div><div style="padding:24px"><div id="export-stats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px"></div></div></div></div>
+
+  <!-- PARAMÈTRES (ajout des nouveaux paramètres PDF et Vendeur) -->
+  <div id="page-parametres" class="page"><div class="page-header"><div><div class="page-title">PARA<span>MÈTRES</span></div><div class="page-sub">Tarifs, paliers, CBM, frais, style PDF, options vendeur</div></div><button class="btn btn-red" onclick="saveParams()">💾 Sauvegarder</button></div><div class="params-grid" id="params-grid"></div></div>
+</main>
+
+<div class="modal-overlay" id="modal-overlay"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><div id="modal-content"></div></div></div>
+<div class="toast" id="toast"></div>
+
+
+<script src="js/app.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
